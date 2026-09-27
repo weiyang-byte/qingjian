@@ -69,15 +69,25 @@ impl QingjianInputController {
         } else if selector == sel!(moveUp:) {
             self.move_highlight(-1, client);
         } else if selector == sel!(moveLeft:) {
-            // 横排矩阵开着：左右键在候选之间移动高亮（单行、展开后都是）；否则照旧移动拼音光标
-            if !self.move_cells(-1, client) {
-                host::with(|h| h.engine.move_cursor_left());
+            // ← 先管拼音光标：在音节边界（开头 / 末尾 / 最优切分的音节起点）整字往左跳，
+            // 音节中间——用 → 微调过——逐字母退；到了最左才轮到候选高亮（矩阵模式），没开矩阵这下原地吃掉
+            let moved = if host::with(|h| h.engine.cursor_at_syllable_boundary()).unwrap_or(true) {
+                host::with(|h| h.engine.move_cursor_syllable_left()).unwrap_or(false)
+            } else {
+                host::with(|h| h.engine.move_cursor_left()).unwrap_or(false)
+            };
+            if moved {
                 self.refresh(client);
+            } else {
+                self.move_cells(-1, client);
             }
         } else if selector == sel!(moveRight:) {
-            if !self.move_cells(1, client) {
-                host::with(|h| h.engine.move_cursor_right());
+            // → 逐字母微调；已经在新拼的最右端（缺省位置）才进候选区——矩阵模式挪高亮，没开矩阵维持原样
+            let moved = host::with(|h| h.engine.move_cursor_right()).unwrap_or(false);
+            if moved {
                 self.refresh(client);
+            } else {
+                self.move_cells(1, client);
             }
         } else if selector == sel!(moveWordLeft:) {
             // ⌥←：光标往左跳一个音节
