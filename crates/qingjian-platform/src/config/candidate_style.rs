@@ -24,6 +24,23 @@ impl Default for CandidateStyle {
 }
 
 impl CandidateStyle {
+    /// 全部风格的名字与菜单标签，顺序即子菜单顺序。
+    pub const NAMES: [(&'static str, &'static str); 3] =
+        [("default", "系统观感"), ("frosted", "毛玻璃"), ("ink", "墨韵")];
+
+    /// 写配置文件用的键（serde 键一致）。
+    pub fn key(self) -> &'static str {
+        Self::NAMES[self.to_index()].0
+    }
+
+    fn to_index(self) -> usize {
+        match self {
+            Self::Default => 0,
+            Self::Frosted => 1,
+            Self::Ink => 2,
+        }
+    }
+
     /// 从配置字符串解析；不认识的写法按缺省并警告。
     pub fn parse(value: &str) -> Self {
         match value {

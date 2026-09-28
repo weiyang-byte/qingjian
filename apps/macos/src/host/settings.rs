@@ -3,7 +3,7 @@
 use super::diagnostics::{copy_to_pasteboard, open_with_system};
 use super::*;
 use crate::preferences::DEFAULT_FONT_LABEL;
-use qingjian_platform::ShiftLetter;
+use qingjian_platform::{CandidateStyle, ShiftLetter};
 
 impl Host {
     /// 写短语前读取文件；外部规则有变化时同步列表并请用户重新确认。
@@ -64,6 +64,15 @@ impl Host {
                 let name = FuzzyRules::NAMES[index];
                 let on = !self.settings.config().fuzzy.is_on(name);
                 if self.settings.set_bool("fuzzy", name, on) {
+                    self.apply_config(false);
+                }
+            }
+            MenuAction::SetStyle(index) => {
+                let Some((key, _)) = CandidateStyle::NAMES.get(index) else {
+                    return;
+                };
+                let style = CandidateStyle::parse(key);
+                if self.settings.set_value("general", "candidate_style", style.key()) {
                     self.apply_config(false);
                 }
             }

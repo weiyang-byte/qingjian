@@ -3,7 +3,7 @@ use objc2::{MainThreadMarker, sel};
 use objc2_app_kit::{NSControlStateValueOff, NSControlStateValueOn, NSMenu, NSMenuItem};
 use objc2_foundation::NSString;
 use qingjian_core::FuzzyRules;
-use qingjian_platform::Config;
+use qingjian_platform::{CandidateStyle, Config};
 
 use super::MenuAction;
 use super::target::MenuTarget;
@@ -18,6 +18,9 @@ pub struct InputMenu {
 
     /// 模糊音子菜单的九条勾选项，顺序同 [`FuzzyRules::NAMES`]。
     fuzzy: Vec<Retained<NSMenuItem>>,
+
+    /// 候选窗配色子菜单的三条勾选项，顺序同 [`CandidateStyle::NAMES`]。
+    styles: Vec<Retained<NSMenuItem>>,
 
     /// 配置文件解析失败时显示的提示行，平时隐藏。
     error: Retained<NSMenuItem>,
@@ -59,6 +62,22 @@ impl InputMenu {
         fuzzy_parent.setSubmenu(Some(&fuzzy_menu));
         menu.addItem(&fuzzy_parent);
 
+        let style_menu = NSMenu::new(mtm);
+        style_menu.setAutoenablesItems(false);
+        let styles: Vec<_> = CandidateStyle::NAMES
+            .iter()
+            .enumerate()
+            .map(|(index, (_, label))| {
+                let item =
+                    action_item(mtm, label, Some(MenuAction::SetStyle(index)), &target);
+                style_menu.addItem(&item);
+                item
+            })
+            .collect();
+        let style_parent = action_item(mtm, "候选窗配色", None, &target);
+        style_parent.setSubmenu(Some(&style_menu));
+        menu.addItem(&style_parent);
+
         menu.addItem(&NSMenuItem::separatorItem(mtm));
         menu.addItem(&action_item(
             mtm,
@@ -90,6 +109,7 @@ impl InputMenu {
             menu,
             cloud,
             fuzzy,
+            styles,
             error,
             update,
             _target: target,
@@ -125,6 +145,10 @@ impl InputMenu {
         for (item, name) in self.fuzzy.iter().zip(FuzzyRules::NAMES) {
             set_checked(item, config.fuzzy.is_on(name));
         }
+        for (item, (name, _)) in self.styles.iter().zip(CandidateStyle::NAMES) {
+            set_checked(item, name == config.general.candidate_style.key());
+        }
+
         match error {
             Some(message) => {
                 self.error

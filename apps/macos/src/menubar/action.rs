@@ -4,6 +4,9 @@ use qingjian_core::FuzzyRules;
 /// 模糊音条目的 tag 起点，后面加规则在 [`FuzzyRules::NAMES`] 里的下标。
 const FUZZY_TAG_BASE: NSInteger = 100;
 
+/// 候选窗配色条目的 tag 起点，后面加风格在 [`qingjian_platform::CandidateStyle::NAMES`] 里的下标。
+const STYLE_TAG_BASE: NSInteger = 200;
+
 /// 菜单能触发的动作。编码进 NSMenuItem 的 tag，派发时再解出来。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MenuAction {
@@ -12,6 +15,9 @@ pub enum MenuAction {
 
     /// 开关一条模糊音规则，值是 [`FuzzyRules::NAMES`] 的下标。
     ToggleFuzzy(usize),
+
+    /// 切候选窗配色，值是 [`qingjian_platform::CandidateStyle::NAMES`] 的下标。
+    SetStyle(usize),
 
     /// 打开偏好设置窗口。
     OpenPreferences,
@@ -31,6 +37,7 @@ impl MenuAction {
             Self::OpenLogs => 3,
             Self::OpenDownload => 4,
             Self::ToggleFuzzy(index) => FUZZY_TAG_BASE + index as NSInteger,
+            Self::SetStyle(index) => STYLE_TAG_BASE + index as NSInteger,
         }
     }
 
@@ -41,8 +48,13 @@ impl MenuAction {
             3 => Self::OpenLogs,
             4 => Self::OpenDownload,
             _ => {
-                let index = usize::try_from(tag.checked_sub(FUZZY_TAG_BASE)?).ok()?;
-                (index < FuzzyRules::NAMES.len()).then_some(Self::ToggleFuzzy(index))?
+                if let Ok(index) = usize::try_from(tag.checked_sub(FUZZY_TAG_BASE)?) {
+                    (index < FuzzyRules::NAMES.len()).then_some(Self::ToggleFuzzy(index))?
+                } else {
+                    let index = usize::try_from(tag.checked_sub(STYLE_TAG_BASE)?).ok()?;
+                    (index < qingjian_platform::CandidateStyle::NAMES.len())
+                        .then_some(Self::SetStyle(index))?
+                }
             }
         })
     }
