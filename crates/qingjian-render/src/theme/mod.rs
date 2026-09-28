@@ -62,6 +62,14 @@ impl Theme {
             (Style::Default, true) => (Palette::dark(), 0.75),
             (Style::Ink, false) => (Palette::ink_light(), 0.82),
             (Style::Ink, true) => (Palette::ink_dark(), 0.78),
+            (Style::Celadon, false) => (Palette::celadon_light(), 0.83),
+            (Style::Celadon, true) => (Palette::celadon_dark(), 0.77),
+            (Style::Amber, false) => (Palette::amber_light(), 0.84),
+            (Style::Amber, true) => (Palette::amber_dark(), 0.78),
+            (Style::Nightflight, false) => (Palette::nightflight_light(), 0.84),
+            (Style::Nightflight, true) => (Palette::nightflight_dark(), 0.76),
+            (Style::Sakura, false) => (Palette::sakura_light(), 0.83),
+            (Style::Sakura, true) => (Palette::sakura_dark(), 0.77),
         };
         let mut theme = Self::with_palette(colors, gamma);
         if style == Style::Ink {

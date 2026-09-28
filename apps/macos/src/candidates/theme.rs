@@ -115,6 +115,110 @@ impl Theme {
                     NSColor::colorWithSRGBRed_green_blue_alpha(0.78, 0.36, 0.27, 0.31);
                 self.corner_radius = 6.0;
             }
+            (CandidateStyle::Celadon, false) => {
+                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.13, 0.25, 0.21, 1.0);
+                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.38, 0.47, 0.43, 1.0);
+                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.55, 0.62, 0.59, 1.0);
+                self.index_color = self.pos_color.clone();
+                self.fresh_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.75, 0.27, 0.35, 1.0);
+                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.55, 0.59, 1.0);
+                self.background =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.93, 0.96, 0.94, 1.0);
+                self.highlight =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.24, 0.55, 0.43, 0.27);
+            }
+            (CandidateStyle::Celadon, true) => {
+                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.88, 0.93, 0.90, 1.0);
+                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.59, 0.69, 0.64, 1.0);
+                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.41, 0.49, 0.45, 1.0);
+                self.index_color = self.pos_color.clone();
+                self.fresh_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 0.47, 0.39, 1.0);
+                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.31, 0.75, 0.78, 1.0);
+                self.background =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.09, 0.13, 0.12, 1.0);
+                self.highlight =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.27, 0.67, 0.51, 0.35);
+            }
+            (CandidateStyle::Amber, false) => {
+                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.29, 0.22, 0.15, 1.0);
+                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.55, 0.45, 0.35, 1.0);
+                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.67, 0.58, 0.47, 1.0);
+                self.index_color = self.pos_color.clone();
+                self.fresh_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.86, 0.39, 0.12, 1.0);
+                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.78, 0.47, 0.16, 1.0);
+                self.background =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.97, 0.95, 0.90, 1.0);
+                self.highlight =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.90, 0.55, 0.16, 0.29);
+            }
+            (CandidateStyle::Amber, true) => {
+                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.94, 0.88, 0.80, 1.0);
+                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.71, 0.62, 0.51, 1.0);
+                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.51, 0.44, 0.35, 1.0);
+                self.index_color = self.pos_color.clone();
+                self.fresh_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 0.59, 0.24, 1.0);
+                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.90, 0.63, 0.27, 1.0);
+                self.background =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.13, 0.11, 0.09, 1.0);
+                self.highlight =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.90, 0.59, 0.24, 0.35);
+            }
+            (CandidateStyle::Nightflight, false) => {
+                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.11, 0.16, 0.26, 1.0);
+                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.39, 0.45, 0.55, 1.0);
+                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.55, 0.60, 0.67, 1.0);
+                self.index_color = self.pos_color.clone();
+                self.fresh_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 0.43, 0.35, 1.0);
+                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.24, 0.47, 0.86, 1.0);
+                self.background =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.92, 0.94, 0.97, 1.0);
+                self.highlight =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.20, 0.39, 0.86, 0.27);
+            }
+            (CandidateStyle::Nightflight, true) => {
+                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.84, 0.89, 0.96, 1.0);
+                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.55, 0.62, 0.75, 1.0);
+                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.39, 0.44, 0.53, 1.0);
+                self.index_color = self.pos_color.clone();
+                self.fresh_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 0.47, 0.39, 1.0);
+                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.43, 0.67, 1.0, 1.0);
+                self.background =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.06, 0.09, 0.14, 1.0);
+                self.highlight =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.35, 0.55, 1.0, 0.35);
+            }
+            (CandidateStyle::Sakura, false) => {
+                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.35, 0.17, 0.24, 1.0);
+                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.59, 0.39, 0.47, 1.0);
+                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.71, 0.53, 0.60, 1.0);
+                self.index_color = self.pos_color.clone();
+                self.fresh_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.86, 0.24, 0.43, 1.0);
+                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.88, 0.39, 0.55, 1.0);
+                self.background =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.98, 0.94, 0.95, 1.0);
+                self.highlight =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.88, 0.47, 0.59, 0.31);
+            }
+            (CandidateStyle::Sakura, true) => {
+                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.95, 0.87, 0.90, 1.0);
+                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.73, 0.59, 0.65, 1.0);
+                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.53, 0.41, 0.46, 1.0);
+                self.index_color = self.pos_color.clone();
+                self.fresh_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 0.39, 0.55, 1.0);
+                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.94, 0.51, 0.67, 1.0);
+                self.background =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.15, 0.10, 0.13, 1.0);
+                self.highlight =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.94, 0.47, 0.63, 0.35);
+            }
         }
     }
 }

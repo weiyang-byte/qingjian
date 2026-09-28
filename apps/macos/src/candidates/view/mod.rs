@@ -79,6 +79,10 @@ fn render_style(style: CandidateStyle) -> RenderStyle {
     match style {
         CandidateStyle::Default => RenderStyle::Default,
         CandidateStyle::Ink => RenderStyle::Ink,
+        CandidateStyle::Celadon => RenderStyle::Celadon,
+        CandidateStyle::Amber => RenderStyle::Amber,
+        CandidateStyle::Nightflight => RenderStyle::Nightflight,
+        CandidateStyle::Sakura => RenderStyle::Sakura,
     }
 }
 
