@@ -421,6 +421,18 @@ impl CandidateView {
         )
         .fill();
 
+        // 毛玻璃勾出玻璃轮廓
+        if theme.vibrancy {
+            theme.border_color.setStroke();
+            let border = NSBezierPath::bezierPathWithRoundedRect_xRadius_yRadius(
+                bounds,
+                theme.corner_radius,
+                theme.corner_radius,
+            );
+            border.setLineWidth(1.0);
+            border.stroke();
+        }
+
         let mut y = theme.padding;
         y += self.draw_top_line(&frame, y);
         match self.ivars().layout.get() {

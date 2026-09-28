@@ -53,6 +53,9 @@ pub struct Theme {
     /// 窗口与高亮条的圆角。
     pub corner_radius: f64,
 
+    /// 窗口描边：毛玻璃下勾出玻璃轮廓，其余风格与背景同色。
+    pub border_color: Retained<NSColor>,
+
     /// 最多显示几行。
     pub max_rows: usize,
 
@@ -75,6 +78,7 @@ impl Theme {
             cloud_color: NSColor::systemTealColor(),
             background: NSColor::windowBackgroundColor(),
             highlight: NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.48, 1.0, 0.16),
+            border_color: NSColor::windowBackgroundColor(),
             padding: 8.0,
             row_padding: 4.0,
             column_gap: 8.0,
@@ -99,9 +103,10 @@ impl Theme {
                     NSColor::colorWithSRGBRed_green_blue_alpha(0.86, 0.47, 0.08, 1.0);
                 self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.59, 0.65, 1.0);
                 self.background =
-                    NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 1.0, 1.0, 0.57);
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.98, 0.98, 0.99, 0.45);
                 self.highlight =
                     NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.43, 0.92, 0.26);
+                self.border_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.0, 0.0, 0.19);
                 self.corner_radius = 10.0;
                 self.vibrancy = true;
             }
@@ -114,9 +119,10 @@ impl Theme {
                     NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 0.63, 0.27, 1.0);
                 self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.27, 0.76, 0.82, 1.0);
                 self.background =
-                    NSColor::colorWithSRGBRed_green_blue_alpha(0.09, 0.09, 0.11, 0.63);
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.10, 0.10, 0.12, 0.59);
                 self.highlight =
                     NSColor::colorWithSRGBRed_green_blue_alpha(0.37, 0.59, 1.0, 0.29);
+                self.border_color = NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 1.0, 1.0, 0.24);
                 self.corner_radius = 10.0;
                 self.vibrancy = true;
             }
@@ -130,6 +136,8 @@ impl Theme {
                 self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.55, 0.61, 1.0);
                 self.background =
                     NSColor::colorWithSRGBRed_green_blue_alpha(0.98, 0.97, 0.95, 1.0);
+                self.border_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.89, 0.87, 0.82, 1.0);
                 self.highlight =
                     NSColor::colorWithSRGBRed_green_blue_alpha(0.70, 0.23, 0.17, 0.20);
                 self.corner_radius = 6.0;
@@ -144,6 +152,8 @@ impl Theme {
                 self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.35, 0.75, 0.78, 1.0);
                 self.background =
                     NSColor::colorWithSRGBRed_green_blue_alpha(0.10, 0.10, 0.11, 1.0);
+                self.border_color =
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.17, 0.17, 0.18, 1.0);
                 self.highlight =
                     NSColor::colorWithSRGBRed_green_blue_alpha(0.78, 0.36, 0.27, 0.31);
                 self.corner_radius = 6.0;

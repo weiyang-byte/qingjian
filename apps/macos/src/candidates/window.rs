@@ -164,7 +164,7 @@ impl CandidateWindow {
             self.mtm.alloc::<NSVisualEffectView>(),
             NSRect::ZERO,
         );
-        effect.setMaterial(NSVisualEffectMaterial::Popover);
+        effect.setMaterial(NSVisualEffectMaterial::Menu);
         effect.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
         effect.setState(NSVisualEffectState::Active);
         effect.setWantsLayer(true);

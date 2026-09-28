@@ -10,7 +10,10 @@ pub(crate) use font_files::available_families;
 
 use objc2::AnyThread;
 use objc2::rc::Retained;
-use objc2_app_kit::{NSBitmapImageRep, NSCalibratedRGBColorSpace, NSCompositingOperation, NSImage};
+use objc2_app_kit::{
+    NSBezierPath, NSBitmapImageRep, NSCalibratedRGBColorSpace, NSColor, NSCompositingOperation,
+    NSGraphicsContext, NSImage,
+};
 use objc2_foundation::{NSPoint, NSRect, NSSize};
 use qingjian_platform::LayoutMode;
 use qingjian_render::{FontLibrary, Layout, Renderer, Style, Theme, UiFont};
@@ -123,10 +126,18 @@ impl BitmapPainter {
         let rect = NSRect::new(NSPoint::ZERO, self.size);
         // SAFETY: hints 传 None，其余参数都是普通值；在 drawRect: 内调用，有当前图形上下文。
         unsafe {
+            // 先 Clear 清掉上一帧：位图背景带 alpha（毛玻璃），用 SourceOver 叠在窗口底层的
+            // 毛玻璃材质上才能透出去；用 Copy 会连 alpha 整块替换，材质就被擦没了
+            let context = NSGraphicsContext::currentContext().unwrap();
+            context.saveGraphicsState();
+            context.setCompositingOperation(NSCompositingOperation::Clear);
+            NSColor::clearColor().set();
+            NSBezierPath::bezierPathWithRect(rect).fill();
+            context.restoreGraphicsState();
             image.drawInRect_fromRect_operation_fraction_respectFlipped_hints(
                 rect,
                 NSRect::ZERO,
-                NSCompositingOperation::Copy,
+                NSCompositingOperation::SourceOver,
                 1.0,
                 true,
                 None,

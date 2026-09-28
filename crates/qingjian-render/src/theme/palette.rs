@@ -27,6 +27,9 @@ pub struct Palette {
 
     /// 当前候选的高亮底色。
     pub highlight: Color,
+
+    /// 窗口描边：与背景不同色时（毛玻璃），背景外面先铺一圈它再铺内底，玻璃有轮廓。
+    pub border: Color,
 }
 
 impl Palette {
@@ -40,6 +43,7 @@ impl Palette {
             cloud: Color::rgb(0, 195, 208),
             background: Color::rgb(255, 255, 255),
             highlight: Color::rgba(176, 206, 125, 127),
+            border: Color::rgb(255, 255, 255),
         }
     }
 
@@ -53,6 +57,7 @@ impl Palette {
             cloud: Color::rgb(0, 210, 224),
             background: Color::rgb(30, 30, 30),
             highlight: Color::rgba(36, 76, 36, 255),
+            border: Color::rgb(30, 30, 30),
         }
     }
 
@@ -65,8 +70,9 @@ impl Palette {
             fresh: Color::rgb(220, 120, 20),
             index: Color::gray(0, 90),
             cloud: Color::rgb(0, 150, 165),
-            background: Color::rgba(255, 255, 255, 145),
+            background: Color::rgba(250, 250, 253, 115),
             highlight: Color::rgba(0, 110, 235, 65),
+            border: Color::rgba(0, 0, 0, 48),
         }
     }
 
@@ -79,8 +85,9 @@ impl Palette {
             fresh: Color::rgb(255, 160, 70),
             index: Color::gray(255, 80),
             cloud: Color::rgb(70, 195, 210),
-            background: Color::rgba(24, 24, 27, 160),
+            background: Color::rgba(24, 24, 27, 150),
             highlight: Color::rgba(95, 150, 255, 75),
+            border: Color::rgba(255, 255, 255, 60),
         }
     }
 
@@ -95,6 +102,7 @@ impl Palette {
             cloud: Color::rgb(0, 140, 155),
             background: Color::rgb(250, 248, 242),
             highlight: Color::rgba(178, 58, 44, 52),
+            border: Color::rgb(226, 222, 210),
         }
     }
 
@@ -109,6 +117,7 @@ impl Palette {
             cloud: Color::rgb(90, 190, 200),
             background: Color::rgb(25, 25, 27),
             highlight: Color::rgba(200, 92, 70, 80),
+            border: Color::rgb(44, 44, 47),
         }
     }
 }

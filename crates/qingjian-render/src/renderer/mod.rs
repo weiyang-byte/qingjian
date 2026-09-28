@@ -151,14 +151,34 @@ impl Renderer {
         {
             shadow.paint(&mut canvas, content, radius, scale);
         }
-        canvas.fill_round_rect(
-            margin,
-            margin,
-            content_width,
-            content_height,
-            radius,
-            theme.colors.background,
-        );
+        // 毛玻璃先铺描边再铺内底，玻璃有轮廓；其余配色 border 与背景同色，一遍画出
+        if theme.colors.border == theme.colors.background {
+            canvas.fill_round_rect(
+                margin,
+                margin,
+                content_width,
+                content_height,
+                radius,
+                theme.colors.background,
+            );
+        } else {
+            canvas.fill_round_rect(
+                margin,
+                margin,
+                content_width,
+                content_height,
+                radius,
+                theme.colors.border,
+            );
+            canvas.fill_round_rect(
+                margin + 1.0,
+                margin + 1.0,
+                content_width - 2.0,
+                content_height - 2.0,
+                (radius - 1.0).max(0.0),
+                theme.colors.background,
+            );
+        }
         let mut y = margin + metrics.padding();
         y += self.draw_top_line(&mut canvas, frame, &metrics, margin, y);
         match layout {
