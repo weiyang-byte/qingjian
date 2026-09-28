@@ -20,7 +20,7 @@ use crate::frame::{Frame, Row, Tone};
 use crate::layout::Layout;
 use crate::shadow::Shadow;
 use crate::text::{TextPainter, TextSize, TextStyle};
-use crate::theme::{FontSpec, Theme};
+use crate::theme::{HighlightShape, FontSpec, Theme};
 
 pub use rendered::Rendered;
 pub use status::{RenderedStatus, StatusCell};
@@ -179,6 +179,7 @@ impl Renderer {
                 theme.colors.background,
             );
         }
+        self.draw_decoration(&mut canvas, &metrics, margin, margin, content_width, content_height);
         let mut y = margin + metrics.padding();
         y += self.draw_top_line(&mut canvas, frame, &metrics, margin, y);
         match layout {
@@ -318,13 +319,79 @@ impl Renderer {
         width: f32,
         height: f32,
     ) {
-        canvas.fill_round_rect(
-            x,
-            y,
-            width,
-            height,
-            m.corner_radius() / 2.0,
-            m.theme.colors.highlight,
-        );
+        let radius = match m.theme.highlight_shape {
+            HighlightShape::Pill => height / 2.0,
+            HighlightShape::Rounded => m.corner_radius() / 2.0,
+        };
+        canvas.fill_round_rect(x, y, width, height, radius, m.theme.colors.highlight);
+    }
+
+    /// 背景角落的小纹样：低透明度、画在背景之后内容之前，候选盖上来时只露边角。
+    fn draw_decoration(&mut self, canvas: &mut Canvas, m: &Metrics, x: f32, y: f32, width: f32, height: f32) {
+        use crate::theme::Decoration;
+        // 统一从右下 / 右上角算位置，四分之一半透明
+        let alpha = 26;
+        let right = x + width;
+        let bottom = y + height;
+        match m.theme.decoration {
+            Decoration::None => {}
+            Decoration::Seal => {
+                // 朱印：红色小方章 + 内框白线
+                let size = 18.0;
+                canvas.fill_round_rect(
+                    right - size - 6.0,
+                    bottom - size - 6.0,
+                    size,
+                    size,
+                    3.0,
+                    crate::color::Color::rgba(178, 44, 40, 110),
+                );
+                canvas.fill_round_rect(
+                    right - size - 3.0,
+                    bottom - size - 3.0,
+                    size - 6.0,
+                    size - 6.0,
+                    1.5,
+                    crate::color::Color::rgba(250, 244, 236, 60),
+                );
+            }
+            Decoration::Ring => {
+                // 双圈同心环：外环玉色，内底色掏空
+                let cx = right - 24.0;
+                let cy = bottom - 24.0;
+                canvas.fill_round_rect(cx - 16.0, cy - 16.0, 32.0, 32.0, 16.0, crate::color::Color::rgba(70, 130, 110, alpha));
+                canvas.fill_round_rect(cx - 12.0, cy - 12.0, 24.0, 24.0, 12.0, m.theme.colors.background);
+                canvas.fill_round_rect(cx - 8.0, cy - 8.0, 16.0, 16.0, 8.0, crate::color::Color::rgba(70, 130, 110, alpha / 2));
+                canvas.fill_round_rect(cx - 5.0, cy - 5.0, 10.0, 10.0, 5.0, m.theme.colors.background);
+            }
+            Decoration::Arcs => {
+                // 三道同心弧：圆心放窗口外右下角，只露四分之一
+                let cx = right + 8.0;
+                let cy = bottom + 8.0;
+                for (radius, alpha) in [(34.0, alpha), (26.0, alpha / 2), (18.0, alpha / 3)] {
+                    canvas.fill_round_rect(cx - radius, cy - radius, radius * 2.0, radius * 2.0, radius, crate::color::Color::rgba(190, 120, 40, alpha));
+                    let inner = radius - 4.0;
+                    canvas.fill_round_rect(cx - inner, cy - inner, inner * 2.0, inner * 2.0, inner, m.theme.colors.background);
+                }
+            }
+            Decoration::Stars => {
+                // 星点：右上角五粒，错落两档大小
+                for (dx, dy, r, a) in [
+                    (30.0, 12.0, 1.6, 70),
+                    (52.0, 20.0, 1.1, 55),
+                    (70.0, 10.0, 1.9, 80),
+                    (92.0, 22.0, 1.2, 50),
+                    (44.0, 34.0, 1.0, 45),
+                ] {
+                    canvas.fill_round_rect(right - dx - r, y + dy - r, r * 2.0, r * 2.0, r, crate::color::Color::rgba(255, 250, 230, a));
+                }
+            }
+            Decoration::Petals => {
+                // 花瓣：右上角三片椭圆近似（圆角矩形旋转不做，用两叠小圆瓣）
+                for (dx, dy, r, a) in [(36.0, 16.0, 4.5, 55), (56.0, 28.0, 3.5, 45), (24.0, 34.0, 3.0, 40)] {
+                    canvas.fill_round_rect(right - dx - r, y + dy - r, r * 2.0, r * 2.0, r, crate::color::Color::rgba(235, 130, 160, a));
+                }
+            }
+        }
     }
 }

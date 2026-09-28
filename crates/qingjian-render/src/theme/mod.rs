@@ -4,10 +4,12 @@
 
 mod font_spec;
 mod palette;
+mod shape;
 mod style;
 
 pub use font_spec::FontSpec;
 pub use palette::Palette;
+pub use shape::{Decoration, HighlightShape};
 pub use style::Style;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -42,6 +44,12 @@ pub struct Theme {
     /// 文字抗锯齿覆盖率的 gamma：小于 1 笔画显粗。CoreText 对文字有一层类似的加深，深色背景上尤其明显，
     /// 线性混合出来的字会偏细；这个值按真机截图并排调。
     pub text_gamma: f32,
+
+    /// 高亮条的形状：圆角矩形 / 胶囊（两端全圆）。
+    pub highlight_shape: HighlightShape,
+
+    /// 背景角落的小纹样，低透明度画在背景上，候选内容会盖在它上面。
+    pub decoration: Decoration,
 }
 
 impl Theme {
@@ -72,9 +80,36 @@ impl Theme {
             (Style::Sakura, true) => (Palette::sakura_dark(), 0.77),
         };
         let mut theme = Self::with_palette(colors, gamma);
-        if style == Style::Ink {
-            // 纸感：圆角小一号，硬朗一点
-            theme.corner_radius = 6.0;
+        match style {
+            Style::Ink => {
+                // 纸感：圆角小一号硬朗，高亮胶囊，右下一枚朱印
+                theme.corner_radius = 6.0;
+                theme.highlight_shape = HighlightShape::Pill;
+                theme.decoration = Decoration::Seal;
+            }
+            Style::Celadon => {
+                // 瓷感：方正 + 双圈纹
+                theme.corner_radius = 6.0;
+                theme.decoration = Decoration::Ring;
+            }
+            Style::Amber => {
+                // 暖感：圆润 + 角落弧线
+                theme.corner_radius = 12.0;
+                theme.decoration = Decoration::Arcs;
+            }
+            Style::Nightflight => {
+                // 夜感：胶囊高亮 + 星点
+                theme.corner_radius = 10.0;
+                theme.highlight_shape = HighlightShape::Pill;
+                theme.decoration = Decoration::Stars;
+            }
+            Style::Sakura => {
+                // 花感：最圆润 + 花瓣
+                theme.corner_radius = 12.0;
+                theme.highlight_shape = HighlightShape::Pill;
+                theme.decoration = Decoration::Petals;
+            }
+            Style::Default => {}
         }
         theme
     }
@@ -92,6 +127,8 @@ impl Theme {
             corner_radius: 8.0,
             max_rows: 9,
             text_gamma,
+            highlight_shape: HighlightShape::Rounded,
+            decoration: Decoration::None,
         }
     }
 }

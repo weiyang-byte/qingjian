@@ -614,12 +614,12 @@ impl CandidateView {
     fn fill_highlight(&self, rect: NSRect) {
         let theme = self.theme();
         theme.highlight.set();
-        NSBezierPath::bezierPathWithRoundedRect_xRadius_yRadius(
-            rect,
-            theme.corner_radius / 2.0,
-            theme.corner_radius / 2.0,
-        )
-        .fill();
+        let radius = if theme.highlight_pill {
+            rect.size.height / 2.0
+        } else {
+            theme.corner_radius / 2.0
+        };
+        NSBezierPath::bezierPathWithRoundedRect_xRadius_yRadius(rect, radius, radius).fill();
     }
 
     /// 小字相对候选词往下挪多少，让两者底部对齐。

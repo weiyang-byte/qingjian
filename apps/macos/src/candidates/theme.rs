@@ -53,6 +53,9 @@ pub struct Theme {
     /// 窗口与高亮条的圆角。
     pub corner_radius: f64,
 
+    /// 高亮条画成胶囊（两端全圆）；否则圆角矩形。与渲染层 highlight_shape 对应。
+    pub highlight_pill: bool,
+
     /// 最多显示几行。
     pub max_rows: usize,
 
@@ -77,6 +80,7 @@ impl Theme {
             row_padding: 4.0,
             column_gap: 8.0,
             corner_radius: 8.0,
+            highlight_pill: false,
             max_rows: 9,
         }
     }
