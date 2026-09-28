@@ -1,14 +1,15 @@
 //! 候选窗口：非激活的浮动 NSPanel，跟随光标，内容由 [`CandidateView`] 绘制。
 
+use objc2::AnyThread;
 use objc2::MainThreadMarker;
 use objc2::rc::Retained;
 use objc2_app_kit::{
     NSAppearance, NSAppearanceCustomization, NSAppearanceNameAqua, NSAppearanceNameDarkAqua,
-    NSAutoresizingMaskOptions, NSBackingStoreType, NSColor, NSEvent, NSPanel, NSScreen,
-    NSVisualEffectBlendingMode, NSVisualEffectMaterial, NSVisualEffectState,
-    NSVisualEffectView, NSWindowCollectionBehavior, NSWindowLevel, NSWindowStyleMask,
+    NSAutoresizingMaskOptions, NSBackingStoreType, NSBezierPath, NSColor, NSEvent, NSPanel,
+    NSScreen, NSVisualEffectBlendingMode, NSVisualEffectMaterial, NSVisualEffectState,
+    NSImage, NSVisualEffectView, NSWindowCollectionBehavior, NSWindowLevel, NSWindowStyleMask,
 };
-use objc2_foundation::{NSPoint, NSRect, NSSize};
+use objc2_foundation::{NSEdgeInsets, NSPoint, NSRect, NSSize};
 use qingjian_platform::{CandidateRenderer, CandidateStyle, LayoutMode, ThemeMode};
 
 use super::frame::Frame;
@@ -174,6 +175,9 @@ impl CandidateWindow {
         }
         effect.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
         effect.setState(NSVisualEffectState::Active);
+        // BehindWindow 的模糊由窗口服务按矩形区域做，layer 的圆角裁切管不到它——
+        // 必须用官方的 maskImage 把材质（含模糊区）裁成圆角，否则圆角玻璃外一圈方形残影
+        effect.setMaskImage(Some(&Self::rounded_mask_image()));
         effect.setWantsLayer(true);
         self.panel.setContentView(Some(&effect));
         effect.addSubview(&self.view);
@@ -202,14 +206,37 @@ impl CandidateWindow {
         self.panel.setContentView(Some(&self.view));
     }
 
+    /// 材质圆角蒙版：黑 = 显示、透明 = 裁掉。60pt 见方、圆角 10pt，四边 20pt cap inset，
+    /// 拉伸时四角形状不变。lockFocus 是画静态蒙版最省事的写法，弃用警告忽略。
+    #[allow(deprecated)]
+    fn rounded_mask_image() -> Retained<NSImage> {
+        let size = NSSize::new(60.0, 60.0);
+        let image = NSImage::initWithSize(NSImage::alloc(), size);
+        image.lockFocus();
+        NSColor::blackColor().set();
+        NSBezierPath::bezierPathWithRoundedRect_xRadius_yRadius(
+            NSRect::new(NSPoint::ZERO, size),
+            10.0,
+            10.0,
+        )
+        .fill();
+        image.unlockFocus();
+        image.setCapInsets(NSEdgeInsets {
+            top: 20.0,
+            left: 20.0,
+            bottom: 20.0,
+            right: 20.0,
+        });
+        image
+    }
+
     /// 给材质层设圆角裁切。安装时 layer 可能还没建（窗口未上屏），所以每次显示都补一遍，幂等。
     fn apply_effect_rounding(&self) {
         let Some(effect) = &self.vibrancy else {
             return;
         };
         let radius = self.view.theme().corner_radius;
-        // SAFETY: layer() 返回 AppKit 托管的 CALayer，只改圆角与裁切
-        if let Some(layer) = unsafe { effect.layer() } {
+        if let Some(layer) = effect.layer() {
             layer.setCornerRadius(radius);
             layer.setMasksToBounds(true);
         }
