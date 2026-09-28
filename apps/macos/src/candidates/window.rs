@@ -64,6 +64,8 @@ impl CandidateWindow {
         let origin = self.place(size, anchor);
         self.panel.setFrame_display(NSRect::new(origin, size), true);
         self.order_front_on_active_space();
+        // 上屏之后 layer 一定已建，补设圆角裁切（安装时窗口未上屏会拿不到 layer）
+        self.apply_effect_rounding();
         if !self.panel.isVisible() {
             tracing::warn!(?anchor, ?origin, "候选窗口 orderFront 之后仍不可见");
         } else {
@@ -164,8 +166,12 @@ impl CandidateWindow {
             self.mtm.alloc::<NSVisualEffectView>(),
             NSRect::ZERO,
         );
-        // HudWindow：深色玻璃，浅色外观下也一眼可见；BehindWindow 才采样窗后内容
+        // HudWindow：深色玻璃。材质跟随外观，浅色模式下会渲染成浅磨砂——强制深色外观，
+        // 让 HUD 在任何系统外观下都是深色玻璃，与 frosted 的深色位图色调一致
         effect.setMaterial(NSVisualEffectMaterial::HUDWindow);
+        if let Some(dark) = NSAppearance::appearanceNamed(unsafe { NSAppearanceNameDarkAqua }) {
+            effect.setAppearance(Some(&dark));
+        }
         effect.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
         effect.setState(NSVisualEffectState::Active);
         effect.setWantsLayer(true);
@@ -176,12 +182,8 @@ impl CandidateWindow {
         self.view
             .setAutoresizingMask(NSAutoresizingMaskOptions::ViewWidthSizable |
                 NSAutoresizingMaskOptions::ViewHeightSizable);
-        // 材质视图是矩形的：不裁圆角的话，玻璃圆角外会露出一圈方形的材质
-        if let Some(layer) = effect.layer() {
-            layer.setCornerRadius(self.view.theme().corner_radius);
-            layer.setMasksToBounds(true);
-        }
         self.vibrancy = Some(effect);
+        self.apply_effect_rounding();
         let frame = self
             .vibrancy
             .as_ref()
@@ -198,6 +200,19 @@ impl CandidateWindow {
     fn remove_vibrancy(&mut self) {
         self.vibrancy = None;
         self.panel.setContentView(Some(&self.view));
+    }
+
+    /// 给材质层设圆角裁切。安装时 layer 可能还没建（窗口未上屏），所以每次显示都补一遍，幂等。
+    fn apply_effect_rounding(&self) {
+        let Some(effect) = &self.vibrancy else {
+            return;
+        };
+        let radius = self.view.theme().corner_radius;
+        // SAFETY: layer() 返回 AppKit 托管的 CALayer，只改圆角与裁切
+        if let Some(layer) = unsafe { effect.layer() } {
+            layer.setCornerRadius(radius);
+            layer.setMasksToBounds(true);
+        }
     }
 
     pub fn max_rows(&self) -> usize {
