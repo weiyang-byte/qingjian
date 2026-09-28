@@ -13,7 +13,7 @@ use objc2::rc::Retained;
 use objc2_app_kit::{NSBitmapImageRep, NSCalibratedRGBColorSpace, NSCompositingOperation, NSImage};
 use objc2_foundation::{NSPoint, NSRect, NSSize};
 use qingjian_platform::LayoutMode;
-use qingjian_render::{FontLibrary, Layout, Renderer, Theme, UiFont};
+use qingjian_render::{FontLibrary, Layout, Renderer, Style, Theme, UiFont};
 
 use super::frame::Frame;
 
@@ -32,6 +32,9 @@ pub struct BitmapPainter {
 
     /// 最近一帧按深色画的。
     dark: bool,
+
+    /// 最近一帧按哪个配色风格画的。
+    style: Style,
 
     /// 最近一帧的倍数。
     scale: f32,
@@ -72,6 +75,7 @@ impl BitmapPainter {
             frame: qingjian_render::Frame::default(),
             layout: Layout::Vertical,
             dark: false,
+            style: Style::Default,
             scale: 2.0,
             size: NSSize::ZERO,
         })
@@ -94,6 +98,16 @@ impl BitmapPainter {
         self.scale = scale;
         self.repaint();
         self.size
+    }
+
+    /// 配色风格变了就换调色板重画。
+    pub fn set_style(&mut self, style: Style, dark: bool) {
+        if self.style == style && self.dark == dark {
+            return;
+        }
+        self.style = style;
+        self.dark = dark;
+        self.repaint();
     }
 
     /// 外观或倍数变了就重画一遍再贴。
@@ -121,11 +135,7 @@ impl BitmapPainter {
     }
 
     fn repaint(&mut self) {
-        let theme = if self.dark {
-            Theme::dark()
-        } else {
-            Theme::light()
-        };
+        let theme = Theme::for_style(self.style, self.dark);
         let started = std::time::Instant::now();
         let rendered =
             match self

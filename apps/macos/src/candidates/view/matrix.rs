@@ -130,7 +130,7 @@ impl CandidateView {
             if budget <= 0.0 {
                 break;
             }
-            let used = self.draw_clipped(segment, self.tone_color(*tone), x, info_top, budget);
+            let used = self.draw_clipped(segment, &self.tone_color(*tone), x, info_top, budget);
             x += used;
             budget -= used;
         }

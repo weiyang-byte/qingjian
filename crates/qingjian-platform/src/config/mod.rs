@@ -1,6 +1,7 @@
 mod apps;
 mod aux_code;
 mod candidate_renderer;
+mod candidate_style;
 mod dictionaries;
 mod general;
 mod key_combo;
@@ -33,6 +34,7 @@ pub use apps::{
 };
 pub use aux_code::AuxCodeConfig;
 pub use candidate_renderer::CandidateRenderer;
+pub use candidate_style::CandidateStyle;
 pub use dictionaries::{DEFAULT_DOMAINS, DictionariesConfig};
 pub use general::{
     DEFAULT_PAGE_KEYS, GeneralConfig, LEARNING_LANGUAGE_OFF, MAX_PAGE_SIZE, PAGE_KEY_OPTIONS,

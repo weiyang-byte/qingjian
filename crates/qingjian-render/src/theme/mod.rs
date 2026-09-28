@@ -4,9 +4,11 @@
 
 mod font_spec;
 mod palette;
+mod style;
 
 pub use font_spec::FontSpec;
 pub use palette::Palette;
+pub use style::Style;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Theme {
@@ -51,6 +53,24 @@ impl Theme {
     /// 深色，对齐 macOS 系统外观。
     pub fn dark() -> Self {
         Self::with_palette(Palette::dark(), 0.75)
+    }
+
+    /// 按配色风格与深浅外观取一套；毛玻璃的背景带 alpha，配合窗口侧的系统材质用。
+    pub fn for_style(style: Style, dark: bool) -> Self {
+        let (colors, gamma) = match (style, dark) {
+            (Style::Default, false) => (Palette::light(), 0.85),
+            (Style::Default, true) => (Palette::dark(), 0.75),
+            (Style::Frosted, false) => (Palette::frosted_light(), 0.80),
+            (Style::Frosted, true) => (Palette::frosted_dark(), 0.72),
+            (Style::Ink, false) => (Palette::ink_light(), 0.82),
+            (Style::Ink, true) => (Palette::ink_dark(), 0.78),
+        };
+        let mut theme = Self::with_palette(colors, gamma);
+        if style == Style::Ink {
+            // 纸感：圆角小一号，硬朗一点
+            theme.corner_radius = 6.0;
+        }
+        theme
     }
 
     fn with_palette(colors: Palette, text_gamma: f32) -> Self {

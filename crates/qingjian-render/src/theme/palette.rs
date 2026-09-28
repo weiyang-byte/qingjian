@@ -55,4 +55,60 @@ impl Palette {
             highlight: Color::rgba(36, 76, 36, 255),
         }
     }
+
+    /// 毛玻璃浅色：半透明白叠在系统材质上，文字加深一档抵住透底。
+    pub const fn frosted_light() -> Self {
+        Self {
+            text: Color::gray(0, 235),
+            gloss: Color::gray(0, 150),
+            pos: Color::gray(0, 90),
+            fresh: Color::rgb(220, 120, 20),
+            index: Color::gray(0, 90),
+            cloud: Color::rgb(0, 150, 165),
+            background: Color::rgba(255, 255, 255, 145),
+            highlight: Color::rgba(0, 110, 235, 65),
+        }
+    }
+
+    /// 毛玻璃深色：半透明炭叠在系统材质上。
+    pub const fn frosted_dark() -> Self {
+        Self {
+            text: Color::gray(255, 230),
+            gloss: Color::gray(255, 155),
+            pos: Color::gray(255, 80),
+            fresh: Color::rgb(255, 160, 70),
+            index: Color::gray(255, 80),
+            cloud: Color::rgb(70, 195, 210),
+            background: Color::rgba(24, 24, 27, 160),
+            highlight: Color::rgba(95, 150, 255, 75),
+        }
+    }
+
+    /// 墨韵浅色：宣纸底、浓墨字、朱砂高亮。
+    pub const fn ink_light() -> Self {
+        Self {
+            text: Color::rgb(38, 38, 40),
+            gloss: Color::rgb(112, 108, 100),
+            pos: Color::rgb(150, 146, 138),
+            fresh: Color::rgb(178, 58, 44),
+            index: Color::rgb(150, 146, 138),
+            cloud: Color::rgb(0, 140, 155),
+            background: Color::rgb(250, 248, 242),
+            highlight: Color::rgba(178, 58, 44, 52),
+        }
+    }
+
+    /// 墨韵深色：炭底暖字，朱砂稍亮。
+    pub const fn ink_dark() -> Self {
+        Self {
+            text: Color::rgb(233, 230, 224),
+            gloss: Color::rgb(160, 155, 145),
+            pos: Color::rgb(110, 106, 100),
+            fresh: Color::rgb(225, 105, 80),
+            index: Color::rgb(110, 106, 100),
+            cloud: Color::rgb(90, 190, 200),
+            background: Color::rgb(25, 25, 27),
+            highlight: Color::rgba(200, 92, 70, 80),
+        }
+    }
 }

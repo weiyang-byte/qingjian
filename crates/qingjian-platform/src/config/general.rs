@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use super::scheme::{Scheme, scheme_label};
 use super::{
-    CandidateRenderer, LayoutMode, LogLevel, PunctuationCommit, PreeditMode, ShiftLetter, ThemeMode,
+    CandidateRenderer, CandidateStyle, LayoutMode, LogLevel, PunctuationCommit, PreeditMode,
+    ShiftLetter, ThemeMode,
 };
 
 /// 每页最多几个候选：数字键只有 1–9。
@@ -76,6 +77,10 @@ pub struct GeneralConfig {
     /// 见 [`PunctuationCommit`]。
     pub punctuation_commit: PunctuationCommit,
 
+    /// 候选窗口配色：`default`（缺省）系统观感、`frosted` 毛玻璃、`ink` 墨韵纸感。
+    /// 见 [`CandidateStyle`]。只有 macOS 用。
+    pub candidate_style: CandidateStyle,
+
     /// 英文模式下的同一件事，中英各记一份；缺省半角。只有 Windows 用（macOS 英文模式一律半角）。
     pub english_full_width_punctuation: bool,
 
@@ -143,6 +148,7 @@ impl Default for GeneralConfig {
             full_width_punctuation: true,
             english_full_width_punctuation: false,
             punctuation_commit: PunctuationCommit::default(),
+            candidate_style: CandidateStyle::default(),
             aux_code_key: qingjian_core::DEFAULT_AUX_CODE_KEY.to_string(),
             aux_code_show: false,
             aux_code_keep_empty: true,

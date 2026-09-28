@@ -4,11 +4,12 @@ use objc2::MainThreadMarker;
 use objc2::rc::Retained;
 use objc2_app_kit::{
     NSAppearance, NSAppearanceCustomization, NSAppearanceNameAqua, NSAppearanceNameDarkAqua,
-    NSBackingStoreType, NSColor, NSEvent, NSPanel, NSScreen, NSWindowCollectionBehavior,
-    NSWindowLevel, NSWindowStyleMask,
+    NSAutoresizingMaskOptions, NSBackingStoreType, NSColor, NSEvent, NSPanel, NSScreen,
+    NSVisualEffectBlendingMode, NSVisualEffectMaterial, NSVisualEffectState,
+    NSVisualEffectView, NSWindowCollectionBehavior, NSWindowLevel, NSWindowStyleMask,
 };
 use objc2_foundation::{NSPoint, NSRect, NSSize};
-use qingjian_platform::{CandidateRenderer, LayoutMode, ThemeMode};
+use qingjian_platform::{CandidateRenderer, CandidateStyle, LayoutMode, ThemeMode};
 
 use super::frame::Frame;
 use super::theme::Theme;
@@ -33,6 +34,9 @@ pub struct CandidateWindow {
     /// 当前外观（跟随系统时为 `None`）；换面板时要重设。
     appearance: Option<Retained<NSAppearance>>,
 
+    /// 毛玻璃底层视图：`frosted` 风格时垫在内容视图下面；换面板时要重装。
+    vibrancy: Option<Retained<NSVisualEffectView>>,
+
     /// 用来取屏幕尺寸。
     mtm: MainThreadMarker,
 }
@@ -45,6 +49,7 @@ impl CandidateWindow {
             panel,
             view,
             appearance: None,
+            vibrancy: None,
             mtm,
         }
     }
@@ -93,6 +98,8 @@ impl CandidateWindow {
         panel.setFrame_display(frame, true);
         panel.orderFrontRegardless();
         self.panel = panel;
+        // 新面板的内容视图是裸的 CandidateView，毛玻璃要重装
+        self.reinstall_vibrancy();
         tracing::warn!(
             recovered = self.panel.isOnActiveSpace(),
             "候选窗口不在当前 Space，已换新面板"
@@ -127,6 +134,54 @@ impl CandidateWindow {
     /// 候选窗字体（字族名，空为系统字体），只对青简渲染器生效。
     pub fn set_font(&self, font: &str) {
         self.view.set_font(font);
+    }
+
+    /// 配色风格：视图换调色板，`frosted` 再垫一层系统毛玻璃材质。
+    pub fn set_style(&mut self, style: CandidateStyle) {
+        let vibrancy = style == CandidateStyle::Frosted;
+        self.view.set_style(style);
+        if vibrancy == self.vibrancy.is_some() {
+            return;
+        }
+        if vibrancy {
+            self.install_vibrancy();
+        } else {
+            self.remove_vibrancy();
+        }
+    }
+
+    /// 装 / 卸毛玻璃层，按当前状态对齐。
+    fn reinstall_vibrancy(&mut self) {
+        if self.vibrancy.is_some() {
+            self.install_vibrancy();
+        }
+    }
+
+    /// 把毛玻璃视图垫到内容视图下面：效果视图当 contentView 自动随窗缩放，
+    /// CandidateView 变成它的子视图，用 autoresizing 跟随。
+    fn install_vibrancy(&mut self) {
+        let effect = NSVisualEffectView::initWithFrame(
+            self.mtm.alloc::<NSVisualEffectView>(),
+            NSRect::ZERO,
+        );
+        effect.setMaterial(NSVisualEffectMaterial::Popover);
+        effect.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
+        effect.setState(NSVisualEffectState::Active);
+        effect.setWantsLayer(true);
+        let bounds = effect.bounds();
+        self.panel.setContentView(Some(&effect));
+        self.view.setFrame(bounds);
+        self.view
+            .setAutoresizingMask(NSAutoresizingMaskOptions::ViewWidthSizable |
+                NSAutoresizingMaskOptions::ViewHeightSizable);
+        effect.addSubview(&self.view);
+        self.vibrancy = Some(effect);
+    }
+
+    /// 拿掉毛玻璃：CandidateView 重新当 contentView，自动随窗缩放。
+    fn remove_vibrancy(&mut self) {
+        self.vibrancy = None;
+        self.panel.setContentView(Some(&self.view));
     }
 
     pub fn max_rows(&self) -> usize {

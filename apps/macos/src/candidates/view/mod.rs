@@ -18,7 +18,8 @@ use objc2_app_kit::{
 use objc2_foundation::{
     NSArray, NSAttributedString, NSDictionary, NSNumber, NSPoint, NSRect, NSSize, NSString,
 };
-use qingjian_platform::{CandidateRenderer, LayoutMode};
+use qingjian_platform::{CandidateRenderer, CandidateStyle, LayoutMode};
+use qingjian_render::Style as RenderStyle;
 
 use super::bitmap::BitmapPainter;
 use super::cloud_icon::CloudIcon;
@@ -37,16 +38,19 @@ pub struct Ivars {
     layout: Cell<LayoutMode>,
 
     /// 云联想的小云朵。
-    cloud: CloudIcon,
+    cloud: RefCell<CloudIcon>,
 
-    /// 主题。
-    theme: Theme,
+    /// 主题。换配色风格（`set_style`）时整个换新。
+    theme: RefCell<Theme>,
 
     /// 位图渲染器；`None` 走 AppKit 逐项绘制。按配置建或丢。
     bitmap: RefCell<Option<BitmapPainter>>,
 
     /// 用户选的字族名（空为系统字体），换了要重建渲染器。
     font: RefCell<String>,
+
+    /// 配色风格（配置 `[general] candidate_style`），换了要重刷主题与位图。
+    style: Cell<CandidateStyle>,
 }
 
 /// preedit 光标的宽度。
@@ -69,6 +73,15 @@ const INDEX_GAP: f64 = 3.0;
 
 /// 横排时高亮底色在候选两侧多出的宽度。
 const HIGHLIGHT_INSET: f64 = 5.0;
+
+/// 平台风格枚举到渲染调色板的映射；渲染 crate 不反向依赖平台配置。
+fn render_style(style: CandidateStyle) -> RenderStyle {
+    match style {
+        CandidateStyle::Default => RenderStyle::Default,
+        CandidateStyle::Frosted => RenderStyle::Frosted,
+        CandidateStyle::Ink => RenderStyle::Ink,
+    }
+}
 
 /// `NSUnderlineStyleSingle`：删除线用单线。
 const STRIKE_SINGLE: isize = 1;
@@ -118,12 +131,31 @@ impl CandidateView {
         let this = mtm.alloc::<Self>().set_ivars(Ivars {
             frame: RefCell::new(Frame::default()),
             layout: Cell::new(LayoutMode::default()),
-            cloud,
-            theme,
+            cloud: RefCell::new(cloud),
+            theme: RefCell::new(theme),
             bitmap: RefCell::new(None),
             font: RefCell::new(String::new()),
+            style: Cell::new(CandidateStyle::default()),
         });
         unsafe { msg_send![super(this), initWithFrame: NSRect::ZERO] }
+    }
+
+    /// 配色风格（配置 `[general] candidate_style`）：换一套主题颜色，位图路径换调色板重画。
+    pub fn set_style(&self, style: CandidateStyle) {
+        if self.ivars().style.get() == style {
+            return;
+        }
+        self.ivars().style.set(style);
+        let mut theme = self.ivars().theme.borrow_mut();
+        theme.apply_style(style, self.is_dark());
+        *self.ivars().cloud.borrow_mut() = CloudIcon::new(&theme.cloud_color, CLOUD_SIZE);
+        let mut bitmap = self.ivars().bitmap.borrow_mut();
+        if let Some(painter) = bitmap.as_mut() {
+            painter.set_style(render_style(style), self.is_dark());
+        }
+        drop(bitmap);
+        drop(theme);
+        self.setNeedsDisplay(true);
     }
 
     /// 候选窗字体（字族名，空为系统字体）。渲染器在用就当场重建。
@@ -175,8 +207,8 @@ impl CandidateView {
             .map_or(2.0, |window| window.backingScaleFactor() as f32)
     }
 
-    pub fn theme(&self) -> &Theme {
-        &self.ivars().theme
+    pub fn theme(&self) -> std::cell::Ref<'_, Theme> {
+        self.ivars().theme.borrow()
     }
 
     pub fn set_layout(&self, layout: LayoutMode) {
@@ -295,7 +327,7 @@ impl CandidateView {
 
     /// 云朵图标占的宽度（含后面的间距）。
     fn cloud_width(&self) -> f64 {
-        let cloud = &self.ivars().cloud;
+        let cloud = self.ivars().cloud.borrow();
         let width = if cloud.is_symbol() {
             cloud.width()
         } else {
@@ -307,7 +339,7 @@ impl CandidateView {
 
     /// 画云朵，返回占用宽度（含间距）。`top` 是所在行文字的顶边，`line_height` 用来垂直居中。
     fn draw_cloud(&self, x: f64, top: f64, line_height: f64) -> f64 {
-        let cloud = &self.ivars().cloud;
+        let cloud = self.ivars().cloud.borrow();
         if cloud.is_symbol() {
             cloud.draw(x, top + (line_height - cloud.width()) / 2.0);
         } else {
@@ -481,7 +513,7 @@ impl CandidateView {
                 x += self.draw_text(
                     segment,
                     &theme.annotation_font,
-                    self.tone_color(*tone),
+                    &self.tone_color(*tone),
                     baseline + small_offset,
                     x,
                 );
@@ -553,7 +585,7 @@ impl CandidateView {
                 x += self.draw_text(
                     segment,
                     &theme.annotation_font,
-                    self.tone_color(*tone),
+                    &self.tone_color(*tone),
                     top,
                     x,
                 );
@@ -592,11 +624,12 @@ impl CandidateView {
         (text_height - self.measure("x", &self.theme().annotation_font).height).max(0.0)
     }
 
-    fn tone_color(&self, tone: Tone) -> &NSColor {
+    fn tone_color(&self, tone: Tone) -> Retained<NSColor> {
+        let theme = self.theme();
         match tone {
-            Tone::Gloss => &self.theme().gloss_color,
-            Tone::Fresh => &self.theme().fresh_color,
-            Tone::Faint => &self.theme().pos_color,
+            Tone::Gloss => theme.gloss_color.clone(),
+            Tone::Fresh => theme.fresh_color.clone(),
+            Tone::Faint => theme.pos_color.clone(),
         }
     }
 
