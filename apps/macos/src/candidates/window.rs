@@ -176,6 +176,11 @@ impl CandidateWindow {
         self.view
             .setAutoresizingMask(NSAutoresizingMaskOptions::ViewWidthSizable |
                 NSAutoresizingMaskOptions::ViewHeightSizable);
+        // 材质视图是矩形的：不裁圆角的话，玻璃圆角外会露出一圈方形的材质
+        if let Some(layer) = effect.layer() {
+            layer.setCornerRadius(self.view.theme().corner_radius);
+            layer.setMasksToBounds(true);
+        }
         self.vibrancy = Some(effect);
         let frame = self
             .vibrancy

@@ -47,14 +47,21 @@ impl MenuAction {
             2 => Self::OpenPreferences,
             3 => Self::OpenLogs,
             4 => Self::OpenDownload,
+            // 100 段是模糊音、200 段是配色；各自的范围检查独立做，
+            // 不能用 `?` 把「不在这一段」直接返回 None，那会把另一段整个吞掉
             _ => {
-                if let Ok(index) = usize::try_from(tag.checked_sub(FUZZY_TAG_BASE)?) {
-                    (index < FuzzyRules::NAMES.len()).then_some(Self::ToggleFuzzy(index))?
-                } else {
-                    let index = usize::try_from(tag.checked_sub(STYLE_TAG_BASE)?).ok()?;
-                    (index < qingjian_platform::CandidateStyle::NAMES.len())
-                        .then_some(Self::SetStyle(index))?
+                let fuzzy = tag
+                    .checked_sub(FUZZY_TAG_BASE)
+                    .and_then(|index| usize::try_from(index).ok())
+                    .filter(|index| *index < FuzzyRules::NAMES.len());
+                if let Some(index) = fuzzy {
+                    return Some(Self::ToggleFuzzy(index));
                 }
+                let style = tag
+                    .checked_sub(STYLE_TAG_BASE)
+                    .and_then(|index| usize::try_from(index).ok())
+                    .filter(|index| *index < qingjian_platform::CandidateStyle::NAMES.len());
+                style.map(Self::SetStyle)?
             }
         })
     }
@@ -73,6 +80,8 @@ mod tests {
             MenuAction::OpenDownload,
             MenuAction::ToggleFuzzy(0),
             MenuAction::ToggleFuzzy(FuzzyRules::NAMES.len() - 1),
+            MenuAction::SetStyle(0),
+            MenuAction::SetStyle(qingjian_platform::CandidateStyle::NAMES.len() - 1),
         ];
         for action in all {
             assert_eq!(MenuAction::from_tag(action.tag()), Some(action));
@@ -80,6 +89,17 @@ mod tests {
         assert_eq!(MenuAction::from_tag(0), None);
         assert_eq!(
             MenuAction::from_tag(FUZZY_TAG_BASE + FuzzyRules::NAMES.len() as NSInteger),
+            None
+        );
+        // 模糊音段查不到的 tag 要继续查配色段，不能整个吞掉
+        assert_eq!(
+            MenuAction::from_tag(STYLE_TAG_BASE),
+            Some(MenuAction::SetStyle(0))
+        );
+        assert_eq!(
+            MenuAction::from_tag(
+                STYLE_TAG_BASE + qingjian_platform::CandidateStyle::NAMES.len() as NSInteger
+            ),
             None
         );
         assert_eq!(MenuAction::from_tag(-1), None);

@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 objc2.workspace = true
 objc2-app-kit.workspace = true
+objc2-quartz-core.workspace = true
 objc2-foundation.workspace = true
 objc2-input-method-kit.workspace = true
 objc2-core-foundation.workspace = true
