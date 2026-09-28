@@ -94,35 +94,20 @@ impl Theme {
         *self = Self::system_default();
         match (style, dark) {
             (CandidateStyle::Default, _) => {}
-            (CandidateStyle::Frosted, false) => {
-                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.0, 0.0, 0.92);
-                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.0, 0.0, 0.59);
-                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.0, 0.0, 0.35);
+            (CandidateStyle::Frosted, _) => {
+                // 深色 HUD 玻璃，两种外观同一套：材质本身就深，浅色下也一眼可见
+                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.92, 0.92, 0.92, 0.94);
+                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 1.0, 1.0, 0.65);
+                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 1.0, 1.0, 0.37);
                 self.index_color = self.pos_color.clone();
                 self.fresh_color =
-                    NSColor::colorWithSRGBRed_green_blue_alpha(0.86, 0.47, 0.08, 1.0);
-                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.59, 0.65, 1.0);
+                    NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 0.67, 0.31, 1.0);
+                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.35, 0.78, 0.84, 1.0);
                 self.background =
-                    NSColor::colorWithSRGBRed_green_blue_alpha(0.98, 0.98, 0.99, 0.45);
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.06, 0.06, 0.08, 0.35);
                 self.highlight =
-                    NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.43, 0.92, 0.26);
-                self.border_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.0, 0.0, 0.19);
-                self.corner_radius = 10.0;
-                self.vibrancy = true;
-            }
-            (CandidateStyle::Frosted, true) => {
-                self.text_color = NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 1.0, 1.0, 0.90);
-                self.gloss_color = NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 1.0, 1.0, 0.61);
-                self.pos_color = NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 1.0, 1.0, 0.31);
-                self.index_color = self.pos_color.clone();
-                self.fresh_color =
-                    NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 0.63, 0.27, 1.0);
-                self.cloud_color = NSColor::colorWithSRGBRed_green_blue_alpha(0.27, 0.76, 0.82, 1.0);
-                self.background =
-                    NSColor::colorWithSRGBRed_green_blue_alpha(0.10, 0.10, 0.12, 0.59);
-                self.highlight =
-                    NSColor::colorWithSRGBRed_green_blue_alpha(0.37, 0.59, 1.0, 0.29);
-                self.border_color = NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 1.0, 1.0, 0.24);
+                    NSColor::colorWithSRGBRed_green_blue_alpha(0.37, 0.59, 1.0, 0.33);
+                self.border_color = NSColor::colorWithSRGBRed_green_blue_alpha(1.0, 1.0, 1.0, 0.22);
                 self.corner_radius = 10.0;
                 self.vibrancy = true;
             }

@@ -158,24 +158,35 @@ impl CandidateWindow {
     }
 
     /// 把毛玻璃视图垫到内容视图下面：效果视图当 contentView 自动随窗缩放，
-    /// CandidateView 变成它的子视图，用 autoresizing 跟随。
+    /// CandidateView 变成它的子视图，装好后再按效果视图的实际边界摆位。
     fn install_vibrancy(&mut self) {
         let effect = NSVisualEffectView::initWithFrame(
             self.mtm.alloc::<NSVisualEffectView>(),
             NSRect::ZERO,
         );
-        effect.setMaterial(NSVisualEffectMaterial::Menu);
+        // HudWindow：深色玻璃，浅色外观下也一眼可见；BehindWindow 才采样窗后内容
+        effect.setMaterial(NSVisualEffectMaterial::HUDWindow);
         effect.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
         effect.setState(NSVisualEffectState::Active);
         effect.setWantsLayer(true);
-        let bounds = effect.bounds();
         self.panel.setContentView(Some(&effect));
-        self.view.setFrame(bounds);
+        effect.addSubview(&self.view);
+        // contentView 装进窗口后才拿得到真实边界；autoresizing 负责之后的跟随
+        self.view.setFrame(effect.bounds());
         self.view
             .setAutoresizingMask(NSAutoresizingMaskOptions::ViewWidthSizable |
                 NSAutoresizingMaskOptions::ViewHeightSizable);
-        effect.addSubview(&self.view);
         self.vibrancy = Some(effect);
+        let frame = self
+            .vibrancy
+            .as_ref()
+            .map(|v| v.frame())
+            .unwrap_or(NSRect::ZERO);
+        let content_subviews = self
+            .panel
+            .contentView()
+            .map(|v| v.subviews().len());
+        tracing::info!(?frame, ?content_subviews, "候选窗已垫毛玻璃材质");
     }
 
     /// 拿掉毛玻璃：CandidateView 重新当 contentView，自动随窗缩放。
