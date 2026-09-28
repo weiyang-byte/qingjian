@@ -1,6 +1,7 @@
 use objc2::rc::Retained;
 use objc2::runtime::AnyObject;
 use objc2::{MainThreadMarker, MainThreadOnly, define_class, msg_send};
+use objc2_app_kit::NSMenuItem;
 use objc2_foundation::{NSObject, NSObjectProtocol};
 
 use crate::host;
@@ -17,6 +18,11 @@ define_class!(
     impl MenuTarget {
         #[unsafe(method(menuAction:))]
         fn menu_action(&self, sender: Option<&AnyObject>) {
+            if let Some(item) = sender.and_then(|s| s.downcast_ref::<NSMenuItem>()) {
+                tracing::info!(tag = item.tag(), title = %item.title(), "菜单点击");
+            } else {
+                tracing::info!("菜单点击（非 NSMenuItem sender）");
+            }
             if let Some(action) = super::action_from_sender(sender) {
                 host::with(|h| h.perform(action));
             }

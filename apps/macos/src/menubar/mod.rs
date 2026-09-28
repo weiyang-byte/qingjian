@@ -32,7 +32,16 @@ pub fn action_from_sender(sender: Option<&AnyObject>) -> Option<MenuAction> {
         let info = sender.downcast_ref::<NSDictionary<AnyObject, AnyObject>>()?;
         // SAFETY: 只读 IMK 导出的常量字符串
         let key: &AnyObject = unsafe { kIMKCommandMenuItemName };
-        info.objectForKey(key)?.downcast::<NSMenuItem>().ok()?.tag()
+        let item = info.objectForKey(key)?.downcast::<NSMenuItem>().ok()?;
+        let title = item.title().to_string();
+        let tag = item.tag();
+        // IMK 转发子菜单条目时会把 item 换成子菜单的第一项（实测 tag 全变 200），标题倒是对的：
+        // 配色类按标题认，其余仍按 tag
+        tracing::info!(title = %title, tag, "IMK 菜单转发");
+        if let Some(action) = MenuAction::from_title(&title) {
+            return Some(action);
+        }
+        tag
     };
     MenuAction::from_tag(tag)
 }

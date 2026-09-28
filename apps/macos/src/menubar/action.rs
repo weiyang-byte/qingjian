@@ -65,10 +65,21 @@ impl MenuAction {
             }
         })
     }
+
+    /// 按菜单标题认动作：IMK 转发系统输入源菜单点击时 item 可能被换掉，tag 不可信，标题是对的。
+    /// 配色三项的标题带「配色：」前缀。
+    pub fn from_title(title: &str) -> Option<Self> {
+        let label = title.strip_prefix("配色：")?;
+        qingjian_platform::CandidateStyle::NAMES
+            .iter()
+            .enumerate()
+            .find(|(_, (_, style_label))| style_label == label)
+            .map(|(index, _)| Self::SetStyle(index))
+    }
 }
 
-#[cfg(test)]
-mod tests {
+    #[cfg(test)]
+    mod tests {
     use super::*;
 
     #[test]

@@ -62,21 +62,22 @@ impl InputMenu {
         fuzzy_parent.setSubmenu(Some(&fuzzy_menu));
         menu.addItem(&fuzzy_parent);
 
-        let style_menu = NSMenu::new(mtm);
-        style_menu.setAutoenablesItems(false);
+        // 配色三兄弟放顶层：IMK 转发系统输入源菜单的「子菜单点击」时会张冠李戴
+        // （实测无论点哪个，转发来的都是子菜单第一项），顶层条目才可靠
         let styles: Vec<_> = CandidateStyle::NAMES
             .iter()
             .enumerate()
             .map(|(index, (_, label))| {
-                let item =
-                    action_item(mtm, label, Some(MenuAction::SetStyle(index)), &target);
-                style_menu.addItem(&item);
+                let item = action_item(
+                    mtm,
+                    &format!("配色：{label}"),
+                    Some(MenuAction::SetStyle(index)),
+                    &target,
+                );
+                menu.addItem(&item);
                 item
             })
             .collect();
-        let style_parent = action_item(mtm, "候选窗配色", None, &target);
-        style_parent.setSubmenu(Some(&style_menu));
-        menu.addItem(&style_parent);
 
         menu.addItem(&NSMenuItem::separatorItem(mtm));
         menu.addItem(&action_item(
