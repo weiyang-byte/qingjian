@@ -275,6 +275,11 @@ impl Engine {
         self.composition.move_end();
     }
 
+    /// 光标是否在缓冲区末尾：壳的分区模型里，末尾 = 焦点在候选区，内部 = 正在拼音里编辑。
+    pub fn cursor_at_end(&self) -> bool {
+        self.composition.cursor() == self.composition.text().len()
+    }
+
     /// 光标是否落在音节边界上：缓冲开头 / 末尾、双拼的键对边界、直输段的字母数字串起点，
     /// 或全拼按最优切分的某个音节（含残缺尾部）的起点。
     /// 壳用它决定 ← 的粒度：边界上整字往左跳（快速换位），音节中间——用 → 微调过之后——逐字母退。

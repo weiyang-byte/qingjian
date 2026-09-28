@@ -69,25 +69,43 @@ impl QingjianInputController {
         } else if selector == sel!(moveUp:) {
             self.move_highlight(-1, client);
         } else if selector == sel!(moveLeft:) {
-            // ← 先管拼音光标：在音节边界（开头 / 末尾 / 最优切分的音节起点）整字往左跳，
-            // 音节中间——用 → 微调过——逐字母退；到了最左才轮到候选高亮（矩阵模式），没开矩阵这下原地吃掉
-            let moved = if host::with(|h| h.engine.cursor_at_syllable_boundary()).unwrap_or(true) {
-                host::with(|h| h.engine.move_cursor_syllable_left()).unwrap_or(false)
+            // 方向键分区模型（网格模式）：焦点在候选区时 ← 在候选间左移，只有停在
+            // 首行首列第一个候选上才进拼音区（第一下整字往左跳）；焦点在拼音区里，
+            // 音节边界整字跳、音节中间逐字母，到最左原地不动。非网格同拼音区规则。
+            let grid = host::with(|h| h.grid_mode()).unwrap_or(false);
+            let in_pinyin = grid && !host::with(|h| h.engine.cursor_at_end()).unwrap_or(true);
+            let moved = if !grid || in_pinyin {
+                let at_boundary =
+                    host::with(|h| h.engine.cursor_at_syllable_boundary()).unwrap_or(true);
+                if at_boundary {
+                    host::with(|h| h.engine.move_cursor_syllable_left()).unwrap_or(false)
+                } else {
+                    host::with(|h| h.engine.move_cursor_left()).unwrap_or(false)
+                }
+            } else if host::with(|h| h.session.page == 0 && h.session.highlighted == 0)
+                .unwrap_or(false)
+            {
+                // 首行首列第一个候选：← 进拼音区，第一下整字往左跳
+                host::with(|h| h.engine.move_cursor_syllable_left());
+                true
             } else {
-                host::with(|h| h.engine.move_cursor_left()).unwrap_or(false)
+                self.move_cells(-1, client)
             };
             if moved {
                 self.refresh(client);
-            } else {
-                self.move_cells(-1, client);
             }
         } else if selector == sel!(moveRight:) {
-            // → 逐字母微调；已经在新拼的最右端（缺省位置）才进候选区——矩阵模式挪高亮，没开矩阵维持原样
-            let moved = host::with(|h| h.engine.move_cursor_right()).unwrap_or(false);
+            // → 在拼音区里逐字母右移，到最右端才回候选区；候选区里逐个右移高亮。
+            // 非网格：拼音光标右移，到末尾原地不动。
+            let grid = host::with(|h| h.grid_mode()).unwrap_or(false);
+            let in_pinyin = grid && !host::with(|h| h.engine.cursor_at_end()).unwrap_or(true);
+            let moved = if !grid || in_pinyin {
+                host::with(|h| h.engine.move_cursor_right()).unwrap_or(false)
+            } else {
+                self.move_cells(1, client)
+            };
             if moved {
                 self.refresh(client);
-            } else {
-                self.move_cells(1, client);
             }
         } else if selector == sel!(moveWordLeft:) {
             // ⌥←：光标往左跳一个音节
