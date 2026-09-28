@@ -1,15 +1,13 @@
 //! 候选窗口：非激活的浮动 NSPanel，跟随光标，内容由 [`CandidateView`] 绘制。
 
-use objc2::AnyThread;
 use objc2::MainThreadMarker;
 use objc2::rc::Retained;
 use objc2_app_kit::{
     NSAppearance, NSAppearanceCustomization, NSAppearanceNameAqua, NSAppearanceNameDarkAqua,
-    NSAutoresizingMaskOptions, NSBackingStoreType, NSBezierPath, NSColor, NSEvent, NSPanel,
-    NSScreen, NSVisualEffectBlendingMode, NSVisualEffectMaterial, NSVisualEffectState,
-    NSImage, NSVisualEffectView, NSWindowCollectionBehavior, NSWindowLevel, NSWindowStyleMask,
+    NSBackingStoreType, NSColor, NSEvent, NSPanel, NSScreen,
+    NSWindowCollectionBehavior, NSWindowLevel, NSWindowStyleMask,
 };
-use objc2_foundation::{NSEdgeInsets, NSPoint, NSRect, NSSize};
+use objc2_foundation::{NSPoint, NSRect, NSSize};
 use qingjian_platform::{CandidateRenderer, CandidateStyle, LayoutMode, ThemeMode};
 
 use super::frame::Frame;
@@ -35,9 +33,6 @@ pub struct CandidateWindow {
     /// 当前外观（跟随系统时为 `None`）；换面板时要重设。
     appearance: Option<Retained<NSAppearance>>,
 
-    /// 毛玻璃底层视图：`frosted` 风格时垫在内容视图下面；换面板时要重装。
-    vibrancy: Option<Retained<NSVisualEffectView>>,
-
     /// 用来取屏幕尺寸。
     mtm: MainThreadMarker,
 }
@@ -50,7 +45,6 @@ impl CandidateWindow {
             panel,
             view,
             appearance: None,
-            vibrancy: None,
             mtm,
         }
     }
@@ -65,8 +59,6 @@ impl CandidateWindow {
         let origin = self.place(size, anchor);
         self.panel.setFrame_display(NSRect::new(origin, size), true);
         self.order_front_on_active_space();
-        // 上屏之后 layer 一定已建，补设圆角裁切（安装时窗口未上屏会拿不到 layer）
-        self.apply_effect_rounding();
         if !self.panel.isVisible() {
             tracing::warn!(?anchor, ?origin, "候选窗口 orderFront 之后仍不可见");
         } else {
@@ -101,8 +93,6 @@ impl CandidateWindow {
         panel.setFrame_display(frame, true);
         panel.orderFrontRegardless();
         self.panel = panel;
-        // 新面板的内容视图是裸的 CandidateView，毛玻璃要重装
-        self.reinstall_vibrancy();
         tracing::warn!(
             recovered = self.panel.isOnActiveSpace(),
             "候选窗口不在当前 Space，已换新面板"
@@ -139,108 +129,12 @@ impl CandidateWindow {
         self.view.set_font(font);
     }
 
-    /// 配色风格：视图换调色板，`frosted` 再垫一层系统毛玻璃材质。
-    pub fn set_style(&mut self, style: CandidateStyle) {
-        let vibrancy = style == CandidateStyle::Frosted;
+    /// 配色风格：视图换调色板。下一帧生效。
+    pub fn set_style(&self, style: CandidateStyle) {
         self.view.set_style(style);
-        if vibrancy == self.vibrancy.is_some() {
-            return;
-        }
-        if vibrancy {
-            self.install_vibrancy();
-        } else {
-            self.remove_vibrancy();
-        }
     }
 
-    /// 装 / 卸毛玻璃层，按当前状态对齐。
-    fn reinstall_vibrancy(&mut self) {
-        if self.vibrancy.is_some() {
-            self.install_vibrancy();
-        }
-    }
 
-    /// 把毛玻璃视图垫到内容视图下面：效果视图当 contentView 自动随窗缩放，
-    /// CandidateView 变成它的子视图，装好后再按效果视图的实际边界摆位。
-    fn install_vibrancy(&mut self) {
-        let effect = NSVisualEffectView::initWithFrame(
-            self.mtm.alloc::<NSVisualEffectView>(),
-            NSRect::ZERO,
-        );
-        // HudWindow：深色玻璃。材质跟随外观，浅色模式下会渲染成浅磨砂——强制深色外观，
-        // 让 HUD 在任何系统外观下都是深色玻璃，与 frosted 的深色位图色调一致
-        effect.setMaterial(NSVisualEffectMaterial::HUDWindow);
-        if let Some(dark) = NSAppearance::appearanceNamed(unsafe { NSAppearanceNameDarkAqua }) {
-            effect.setAppearance(Some(&dark));
-        }
-        effect.setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
-        effect.setState(NSVisualEffectState::Active);
-        // BehindWindow 的模糊由窗口服务按矩形区域做，layer 的圆角裁切管不到它——
-        // 必须用官方的 maskImage 把材质（含模糊区）裁成圆角，否则圆角玻璃外一圈方形残影
-        effect.setMaskImage(Some(&Self::rounded_mask_image()));
-        effect.setWantsLayer(true);
-        self.panel.setContentView(Some(&effect));
-        effect.addSubview(&self.view);
-        // contentView 装进窗口后才拿得到真实边界；autoresizing 负责之后的跟随
-        self.view.setFrame(effect.bounds());
-        self.view
-            .setAutoresizingMask(NSAutoresizingMaskOptions::ViewWidthSizable |
-                NSAutoresizingMaskOptions::ViewHeightSizable);
-        self.vibrancy = Some(effect);
-        self.apply_effect_rounding();
-        let frame = self
-            .vibrancy
-            .as_ref()
-            .map(|v| v.frame())
-            .unwrap_or(NSRect::ZERO);
-        let content_subviews = self
-            .panel
-            .contentView()
-            .map(|v| v.subviews().len());
-        tracing::info!(?frame, ?content_subviews, "候选窗已垫毛玻璃材质");
-    }
-
-    /// 拿掉毛玻璃：CandidateView 重新当 contentView，自动随窗缩放。
-    fn remove_vibrancy(&mut self) {
-        self.vibrancy = None;
-        self.panel.setContentView(Some(&self.view));
-    }
-
-    /// 材质圆角蒙版：黑 = 显示、透明 = 裁掉。60pt 见方、圆角 10pt，四边 20pt cap inset，
-    /// 拉伸时四角形状不变。lockFocus 是画静态蒙版最省事的写法，弃用警告忽略。
-    #[allow(deprecated)]
-    fn rounded_mask_image() -> Retained<NSImage> {
-        let size = NSSize::new(60.0, 60.0);
-        let image = NSImage::initWithSize(NSImage::alloc(), size);
-        image.lockFocus();
-        NSColor::blackColor().set();
-        NSBezierPath::bezierPathWithRoundedRect_xRadius_yRadius(
-            NSRect::new(NSPoint::ZERO, size),
-            10.0,
-            10.0,
-        )
-        .fill();
-        image.unlockFocus();
-        image.setCapInsets(NSEdgeInsets {
-            top: 20.0,
-            left: 20.0,
-            bottom: 20.0,
-            right: 20.0,
-        });
-        image
-    }
-
-    /// 给材质层设圆角裁切。安装时 layer 可能还没建（窗口未上屏），所以每次显示都补一遍，幂等。
-    fn apply_effect_rounding(&self) {
-        let Some(effect) = &self.vibrancy else {
-            return;
-        };
-        let radius = self.view.theme().corner_radius;
-        if let Some(layer) = effect.layer() {
-            layer.setCornerRadius(radius);
-            layer.setMasksToBounds(true);
-        }
-    }
 
     pub fn max_rows(&self) -> usize {
         self.view.theme().max_rows

@@ -78,7 +78,6 @@ const HIGHLIGHT_INSET: f64 = 5.0;
 fn render_style(style: CandidateStyle) -> RenderStyle {
     match style {
         CandidateStyle::Default => RenderStyle::Default,
-        CandidateStyle::Frosted => RenderStyle::Frosted,
         CandidateStyle::Ink => RenderStyle::Ink,
     }
 }
@@ -420,18 +419,6 @@ impl CandidateView {
             theme.corner_radius,
         )
         .fill();
-
-        // 毛玻璃勾出玻璃轮廓
-        if theme.vibrancy {
-            theme.border_color.setStroke();
-            let border = NSBezierPath::bezierPathWithRoundedRect_xRadius_yRadius(
-                bounds,
-                theme.corner_radius,
-                theme.corner_radius,
-            );
-            border.setLineWidth(1.0);
-            border.stroke();
-        }
 
         let mut y = theme.padding;
         y += self.draw_top_line(&frame, y);

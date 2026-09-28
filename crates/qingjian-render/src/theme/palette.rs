@@ -61,31 +61,6 @@ impl Palette {
         }
     }
 
-    /// 毛玻璃（浅色外观）：深色 HUD 玻璃，两种外观同一套——材质本身就深，浅色下也一眼可见。
-    pub const fn frosted_light() -> Self {
-        Self::frosted_glass()
-    }
-
-    /// 毛玻璃（深色外观）：同上。
-    pub const fn frosted_dark() -> Self {
-        Self::frosted_glass()
-    }
-
-    /// 毛玻璃本体：深色 HUD 材质上的半透明炭面，亮字、蓝高亮、白描边。
-    pub const fn frosted_glass() -> Self {
-        Self {
-            text: Color::gray(235, 240),
-            gloss: Color::gray(255, 165),
-            pos: Color::gray(255, 95),
-            fresh: Color::rgb(255, 170, 80),
-            index: Color::gray(255, 95),
-            cloud: Color::rgb(90, 200, 215),
-            background: Color::rgba(16, 16, 20, 90),
-            highlight: Color::rgba(95, 150, 255, 85),
-            border: Color::rgba(255, 255, 255, 55),
-        }
-    }
-
     /// 墨韵浅色：宣纸底、浓墨字、朱砂高亮。
     pub const fn ink_light() -> Self {
         Self {
