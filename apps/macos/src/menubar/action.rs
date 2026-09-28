@@ -73,7 +73,7 @@ impl MenuAction {
         qingjian_platform::CandidateStyle::NAMES
             .iter()
             .enumerate()
-            .find(|(_, (_, style_label))| style_label == label)
+            .find(|(_, (_, style_label))| *style_label == label)
             .map(|(index, _)| Self::SetStyle(index))
     }
 }
